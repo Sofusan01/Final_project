@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
+import NavigationDebug from "@/components/NavigationDebug";
 import { useUserProfile } from "@/hooks/useUserProfile";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -11,11 +12,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const router = useRouter();
 
     useEffect(() => {
+        // Only redirect if userProfile is explicitly null (not undefined/loading)
         if (userProfile === null) {
             router.replace("/login");
         }
     }, [userProfile, router]);
 
+    // Show loading state while userProfile is being determined
     if (userProfile === undefined) {
         return (
             <div className="w-full h-screen flex items-center justify-center bg-slate-50">
@@ -27,6 +30,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         );
     }
 
+    // Don't render anything if user is not authenticated
     if (userProfile === null) {
         return null;
     }
@@ -52,6 +56,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     {children}
                 </div>
             </main>
+            <NavigationDebug />
         </div>
     );
 }

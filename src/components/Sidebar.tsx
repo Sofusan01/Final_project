@@ -1,8 +1,7 @@
 // src/components/Sidebar.tsx
 "use client";
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useState, useEffect, useCallback } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import {
     LayoutDashboard,
     Settings,
@@ -56,8 +55,9 @@ const HamburgerIcon = ({ collapsed, onClick }: { collapsed: boolean; onClick: ()
 export default function Sidebar({ collapsed, setCollapsed, user }: SidebarProps) {
     const [mobileOpen, setMobileOpen] = useState(false);
     const pathname = usePathname();
+    const router = useRouter();
 
-    const isActive = (href: string) => pathname === href;
+    const isActive = useCallback((href: string) => pathname === href, [pathname]);
 
     // ปิด mobile menu เมื่อเปลี่ยนหน้า
     useEffect(() => {
@@ -75,6 +75,13 @@ export default function Sidebar({ collapsed, setCollapsed, user }: SidebarProps)
             document.body.style.overflow = 'unset';
         };
     }, [mobileOpen]);
+
+    const handleNavigation = useCallback((href: string) => {
+        setMobileOpen(false);
+        if (pathname !== href) {
+            router.push(href);
+        }
+    }, [pathname, router]);
 
     return (
         <>
@@ -124,7 +131,10 @@ export default function Sidebar({ collapsed, setCollapsed, user }: SidebarProps)
                 >
                     {/* Logo - แสดงเฉพาะเมื่อไม่ fold */}
                     {!collapsed && (
-                        <Link href="/dashboard" className="flex items-center gap-3 group relative z-10">
+                        <button
+                            onClick={() => handleNavigation("/dashboard")}
+                            className="flex items-center gap-3 group relative z-10"
+                        >
                             <div
                                 className="rounded-xl p-3 shadow-lg group-hover:shadow-xl transition-all duration-300"
                                 style={{
@@ -142,7 +152,7 @@ export default function Sidebar({ collapsed, setCollapsed, user }: SidebarProps)
                                     Plant Dashboard
                                 </span>
                             </div>
-                        </Link>
+                        </button>
                     )}
 
                     {/* Hamburger Icon - แสดงเฉพาะเมื่อ fold */}
@@ -192,8 +202,8 @@ export default function Sidebar({ collapsed, setCollapsed, user }: SidebarProps)
                     {menu.map(({ label, icon: Icon, href }) => {
                         const active = isActive(href);
                         return (
-                            <Link
-                                href={href}
+                            <button
+                                onClick={() => handleNavigation(href)}
                                 key={href}
                                 className={`
                                     group relative flex items-center rounded-xl transition-all duration-200
@@ -207,7 +217,6 @@ export default function Sidebar({ collapsed, setCollapsed, user }: SidebarProps)
                                         ? "linear-gradient(135deg, #16a34a 0%, #22c55e 100%)"
                                         : "transparent",
                                 }}
-                                onClick={() => setMobileOpen(false)}
                             >
                                 <Icon className={`flex-shrink-0 ${collapsed ? "w-6 h-6" : "w-5 h-5"}`} />
                                 {!collapsed && (
@@ -222,7 +231,7 @@ export default function Sidebar({ collapsed, setCollapsed, user }: SidebarProps)
                                         {label}
                                     </div>
                                 )}
-                            </Link>
+                            </button>
                         );
                     })}
                 </nav>

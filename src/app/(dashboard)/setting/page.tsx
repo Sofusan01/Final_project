@@ -15,6 +15,16 @@ export default function SettingPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pageLoading, setPageLoading] = useState(true);
+
+  // Page loading state to prevent flickering
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setPageLoading(false);
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   // โหลดค่าปัจจุบันจาก Firebase RTDB
   useEffect(() => {
@@ -57,6 +67,19 @@ export default function SettingPage() {
         setError("เกิดข้อผิดพลาดในการบันทึก");
       }
     }
+  }
+
+  if (pageLoading) {
+    return (
+      <div className="w-full max-w-2xl mx-auto p-6">
+        <div className="bg-slate-800 rounded-2xl shadow-lg border border-slate-700 p-8">
+          <div className="flex items-center justify-center">
+            <Loader2 className="w-8 h-8 animate-spin text-slate-300" />
+            <span className="ml-3 text-slate-400">Loading settings...</span>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (loading) {

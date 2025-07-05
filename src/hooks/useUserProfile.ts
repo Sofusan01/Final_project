@@ -10,34 +10,72 @@ interface UserProfile {
 export function useUserProfile() {
   const [userProfile, setUserProfile] = useState<UserProfile | null | undefined>(undefined);
 
+  // Hydrate from localStorage on client only
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const cached = localStorage.getItem('userProfile');
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          setUserProfile(parsed);
+        } catch (e) {
+          console.error('Failed to parse cached profile:', e);
+          localStorage.removeItem('userProfile');
+        }
+      }
+    }
+  }, []);
+
   useEffect(() => {
     let ignore = false;
 
+    const setAndCacheProfile = (profile: UserProfile | null) => {
+      if (!ignore) {
+        setUserProfile(profile);
+        if (typeof window !== 'undefined') {
+          if (profile) {
+            localStorage.setItem('userProfile', JSON.stringify(profile));
+          } else {
+            localStorage.removeItem('userProfile');
+          }
+        }
+      }
+    };
+
     const getProfile = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
-        if (!session?.user) {
-          if (!ignore) setUserProfile(null);
+        if (sessionError) {
+          console.error('Session error:', sessionError);
+          setAndCacheProfile(null);
           return;
         }
 
+        if (!session?.user) {
+          setAndCacheProfile(null);
+          return;
+        }
+        
         // ดึงข้อมูล profile จาก profiles table
-        const { data: profile } = await supabase
+        const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('first_name, last_name')
           .eq('id', session.user.id)
           .single();
 
+        if (profileError && profileError.code !== 'PGRST116') {
+          console.error('Profile fetch error:', profileError);
+        }
+
         if (!ignore) {
           if (profile) {
-            setUserProfile({
+            setAndCacheProfile({
               firstName: profile.first_name || '',
               lastName: profile.last_name || ''
             });
           } else {
-            // ถ้าไม่มี profile ให้ใช้ข้อมูลจาก user metadata
-            setUserProfile({
+            setAndCacheProfile({
               firstName: session.user.user_metadata?.firstName || 'User',
               lastName: session.user.user_metadata?.lastName || ''
             });
@@ -45,7 +83,9 @@ export function useUserProfile() {
         }
       } catch (error) {
         console.error('Profile fetch error:', error);
-        if (!ignore) setUserProfile(null);
+        if (!ignore) {
+          setAndCacheProfile(null);
+        }
       }
     };
 
@@ -55,30 +95,42 @@ export function useUserProfile() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (event === 'SIGNED_OUT') {
-          setUserProfile(null);
+          setAndCacheProfile(null);
           return;
         }
-
+        
         if (session?.user) {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('first_name, last_name')
-            .eq('id', session.user.id)
-            .single();
-
-          if (profile) {
-            setUserProfile({
-              firstName: profile.first_name || '',
-              lastName: profile.last_name || ''
-            });
-          } else {
-            setUserProfile({
+          try {
+            const { data: profile, error: profileError } = await supabase
+              .from('profiles')
+              .select('first_name, last_name')
+              .eq('id', session.user.id)
+              .single();
+              
+            if (profileError && profileError.code !== 'PGRST116') {
+              console.error('Profile fetch error:', profileError);
+            }
+            
+            if (profile) {
+              setAndCacheProfile({
+                firstName: profile.first_name || '',
+                lastName: profile.last_name || ''
+              });
+            } else {
+              setAndCacheProfile({
+                firstName: session.user.user_metadata?.firstName || 'User',
+                lastName: session.user.user_metadata?.lastName || ''
+              });
+            }
+          } catch (error) {
+            console.error('Auth state change error:', error);
+            setAndCacheProfile({
               firstName: session.user.user_metadata?.firstName || 'User',
               lastName: session.user.user_metadata?.lastName || ''
             });
           }
         } else {
-          setUserProfile(null);
+          setAndCacheProfile(null);
         }
       }
     );
