@@ -1,3 +1,4 @@
+// /src/app/(dashboard)/setting/page.tsx
 "use client";
 import { useEffect, useState } from "react";
 import { ref, set, onValue } from "firebase/database";

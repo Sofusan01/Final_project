@@ -1,3 +1,4 @@
+// /src/components/SyncSettingPanel.tsx
 import { useEffect, useState } from "react";
 import { ref, set, onValue } from "firebase/database";
 import { db } from "@/lib/firebase"; // import db จาก config firebase

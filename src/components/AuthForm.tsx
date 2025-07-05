@@ -1,3 +1,4 @@
+// /src/components/AuthForm.tsx
 import { useState } from "react";
 import Link from "next/link";
 
@@ -79,8 +80,8 @@ export default function AuthForm({ type, onSubmit, loading }: Props) {
           {loading
             ? "กำลังดำเนินการ..."
             : type === "login"
-            ? "เข้าสู่ระบบ"
-            : "สมัครสมาชิก"}
+              ? "เข้าสู่ระบบ"
+              : "สมัครสมาชิก"}
         </button>
       </form>
       {/* ส่วนลิงก์สลับหน้า */}

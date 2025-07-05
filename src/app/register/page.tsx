@@ -7,18 +7,20 @@ import Modal from "@/components/Modal";
 
 export default function RegisterPage() {
   const router = useRouter();
+  const [checkingSession, setCheckingSession] = useState(true);
   const [loading, setLoading] = useState(false);
   const [modal, setModal] = useState<{ open: boolean; msg: string }>({
     open: false,
     msg: "",
   });
 
-  // ตรวจสอบ session เมื่อ mount
   useEffect(() => {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
         router.replace("/dashboard");
+      } else {
+        setCheckingSession(false);
       }
     };
     checkSession();
@@ -26,7 +28,6 @@ export default function RegisterPage() {
 
   const handleRegister = async (email: string, password: string, firstName?: string, lastName?: string) => {
     setLoading(true);
-
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -44,7 +45,7 @@ export default function RegisterPage() {
         return;
       }
 
-      // บันทึก profile ถ้า signUp สำเร็จ
+      // เพิ่มข้อมูล profile (optional)
       const userId = data.user?.id;
       if (userId && firstName && lastName) {
         const { error: profileError } = await supabase.from("profiles").insert([
@@ -55,7 +56,6 @@ export default function RegisterPage() {
             email: email
           }
         ]);
-
         if (profileError) {
           console.error('Profile creation error:', profileError);
         }
@@ -65,16 +65,24 @@ export default function RegisterPage() {
         open: true,
         msg: "สมัครสมาชิกสำเร็จ! ตรวจสอบอีเมลเพื่อยืนยันตัวตน แล้วเข้าสู่ระบบ",
       });
-      setTimeout(() => router.push("/login"), 2200);
+      setTimeout(() => router.replace("/login"), 2200);
 
     } catch (err) {
-      // แก้ไข: ใช้งาน err variable
       console.error('Registration error:', err);
       setModal({ open: true, msg: "เกิดข้อผิดพลาดในการสมัครสมาชิก" });
     } finally {
       setLoading(false);
     }
   };
+
+  // Loading skeleton
+  if (checkingSession) {
+    return (
+      <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#111] via-[#232323] to-[#1a237e]">
+        <div className="text-white text-lg animate-pulse">Loading...</div>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#111] via-[#232323] to-[#1a237e]">

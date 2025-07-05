@@ -1,3 +1,4 @@
+///src/app/(dashboard)/result/page.tsx
 "use client";
 import { useState } from "react";
 import ResultChart from "@/components/ResultChart";

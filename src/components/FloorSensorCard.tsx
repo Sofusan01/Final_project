@@ -1,16 +1,10 @@
+// src/components/FloorSensorCard.tsx
 "use client";
 import { useEffect, useState } from "react";
 import { onValue, ref } from "firebase/database";
 import { db } from "@/lib/firebase";
 import { Gauge } from '@mui/x-charts/Gauge';
-import {
-  Thermometer,
-  Droplets,
-  Waves,
-  FlaskConical,
-  Sun,
-  Zap
-} from "lucide-react";
+import { Thermometer, Droplets, Waves, FlaskConical, Sun, Zap } from "lucide-react";
 
 const SENSOR_CONFIG: Record<string, {
   label: string;
@@ -109,11 +103,9 @@ export function FloorSensorCard({ floor }: { floor: string }) {
     const sensorRef = ref(db, `${floor}/sensor`);
     const unsubscribe = onValue(sensorRef, snap => {
       const val = snap.val() || {};
-
       Object.keys(val).forEach((k) => {
         if (!val[k] && val[k] !== 0) delete val[k];
       });
-
       setSensor(val);
       setIsLoading(false);
     });
@@ -153,7 +145,7 @@ export function FloorSensorCard({ floor }: { floor: string }) {
             <span className="text-sm sm:text-base mt-2 font-medium">All sensors are offline</span>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
+          <div className="flex flex-row flex-wrap gap-6 justify-between">
             {sensorEntries.map(([key, value]) => {
               const config = SENSOR_CONFIG[key];
               const numValue = Number(value);
@@ -170,22 +162,22 @@ export function FloorSensorCard({ floor }: { floor: string }) {
               return (
                 <div
                   key={key}
-                  className="bg-gradient-to-br from-white/90 to-gray-50/90 dark:from-gray-800/90 dark:to-gray-900/90 backdrop-blur-sm rounded-xl p-3 sm:p-4 border-2 border-gray-200/50 dark:border-gray-700/50 transition-all duration-300 hover:shadow-xl hover:scale-105 hover:border-blue-300 dark:hover:border-blue-600 hover:bg-white/95 dark:hover:bg-gray-800/95"
+                  className="bg-gradient-to-br from-white/90 to-gray-50/90 dark:from-gray-800/90 dark:to-gray-900/90 backdrop-blur-sm rounded-xl p-3 sm:p-4 border-2 border-gray-200/50 dark:border-gray-700/50 transition-all duration-300 hover:shadow-xl hover:scale-105 hover:border-blue-300 dark:hover:border-blue-600 hover:bg-white/95 dark:hover:bg-gray-800/95 flex-1 min-w-[200px]"
                 >
-                  {/* Sensor Header - ปรับให้ responsive */}
+                  {/* Sensor Header */}
                   <div className="flex flex-col items-center text-center mb-3 sm:mb-4 space-y-2 min-h-[80px] sm:min-h-[90px] px-1">
                     <div className={`p-2 sm:p-3 rounded-xl bg-gradient-to-br from-white to-gray-100 dark:from-gray-700 dark:to-gray-800 shadow-lg border border-gray-200 dark:border-gray-600 ${config.color} flex-shrink-0`}>
                       <Icon className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 drop-shadow-sm" />
                     </div>
 
-                    {/* ชื่อเซ็นเซอร์ - ปรับให้ไม่ล้น */}
+                    {/* Sensor Name */}
                     <h4 className="font-semibold text-gray-900 dark:text-white text-xs sm:text-sm leading-tight min-h-[28px] sm:min-h-[32px] flex items-center justify-center text-center px-1 max-w-full">
                       <span className="truncate">
                         {config.label}
                       </span>
                     </h4>
 
-                    {/* ค่าและหน่วย - ปรับให้ responsive */}
+                    {/* Value and Unit */}
                     <div className="flex items-baseline justify-center gap-1 max-w-full overflow-hidden">
                       <span className={`text-base sm:text-lg lg:text-xl font-bold ${config.color} truncate max-w-[80px] sm:max-w-[100px]`}>
                         {formatValue(numValue, key)}
@@ -198,7 +190,7 @@ export function FloorSensorCard({ floor }: { floor: string }) {
                     </div>
                   </div>
 
-                  {/* MUI X Gauge - ปรับขนาดให้ responsive */}
+                  {/* MUI Gauge */}
                   <div className="h-24 sm:h-28 lg:h-32 flex items-end justify-center">
                     <Gauge
                       value={numValue}
